@@ -46,6 +46,20 @@ export class AuthService {
     return this.buildAuthResponse(user);
   }
 
+  async getProfile(userId: string) {
+    const user = await this.usersService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return {
+      id: user._id.toString(),
+      email: user.email,
+      role: user.role,
+      createdAt: user.createdAt,
+    };
+  }
+
   async login(dto: LoginDto): Promise<AuthResponse> {
     const user = await this.usersService.findByEmailWithPassword(dto.email);
     if (!user) {
