@@ -6,9 +6,13 @@ import { User, UserDocument } from './schemas/user.schema';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
+  constructor(@InjectModel(User.name) private userModel: Model<User>) {}
 
-  create(email: string, passwordHash: string, role: UserRole): Promise<UserDocument> {
+  create(
+    email: string,
+    passwordHash: string,
+    role: UserRole,
+  ): Promise<UserDocument> {
     return this.userModel.create({ email, passwordHash, role });
   }
 
