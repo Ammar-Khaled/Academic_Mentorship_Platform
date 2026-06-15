@@ -1,16 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-
-import {
-  ReviewSession,
-  ReviewSessionSchema,
-} from './schemas/review-session.schema';
-import {
-  SessionAuditLog,
-  SessionAuditLogSchema,
-} from './schemas/session-audit-log.schema';
-import { SessionsController } from './sessions.controller';
 import { SessionsService } from './sessions.service';
+import { SessionsController } from './sessions.controller';
+import { ReviewSession, ReviewSessionSchema } from './schemas/review-session.schema';
+import { SessionAuditLog, SessionAuditLogSchema } from './schemas/session-audit-log.schema';
 
 @Module({
   imports: [
@@ -21,6 +14,5 @@ import { SessionsService } from './sessions.service';
   ],
   controllers: [SessionsController],
   providers: [SessionsService],
-  exports: [SessionsService, MongooseModule],
 })
 export class SessionsModule {}
