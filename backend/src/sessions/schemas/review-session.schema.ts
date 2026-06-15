@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { ReviewSessionStatus } from '../../common/enums/review-session-status.enum';
+import { ReviewSessionStatus } from './../../common/enums/review-session-status.enum';
 
 export type ReviewSessionDocument = HydratedDocument<ReviewSession>;
 
@@ -29,6 +29,12 @@ export class ReviewSession {
   })
   status: ReviewSessionStatus;
 
+  @Prop({ trim: true })
+  evaluationNotes?: string;
+
+  @Prop()
+  evaluatedAt?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +43,9 @@ export const ReviewSessionSchema = SchemaFactory.createForClass(ReviewSession);
 
 ReviewSessionSchema.index({ mentor: 1, startTime: 1, endTime: 1 });
 ReviewSessionSchema.index({ student: 1, status: 1, startTime: -1 });
+
+ReviewSessionSchema.index({ mentor: 1, status: 1, startTime: -1 });
+
 ReviewSessionSchema.index(
   { mentor: 1, startTime: 1 },
   {
