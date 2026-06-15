@@ -21,7 +21,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { UserRole } from '../common/enums/user-role.enum';
-import type { UserDocument } from '../users/schemas/user.schema';
 import { ReviewSessionStatus } from '../common/enums/review-session-status.enum';
 
 import { MentorDashboardService } from './mentor-dashboard.service';
@@ -30,7 +29,28 @@ import { CreateAvailabilityDto } from './dto/create-availability.dto';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto';
 import { UpdateEvaluationDto } from './../sessions/dto/update-evaluation.dto';
 
-type CurrentUserDoc = UserDocument & { _id: Types.ObjectId };
+// ─── safe union type (covers all common JWT payload shapes) ───────────────────
+type CurrentUserDoc = {
+  _id?: Types.ObjectId;
+  id?: string;
+  sub?: string;
+  userId?: string;
+  email?: string;
+  role?: string;
+};
+
+// ─── helper: resolve user id regardless of JWT payload shape ──────────────────
+function resolveUserId(user: CurrentUserDoc): string {
+  const id = user?._id?.toString() ?? user?.id ?? user?.sub ?? user?.userId;
+
+  if (!id) {
+    throw new Error(
+      `Cannot resolve user id. CurrentUser shape: ${JSON.stringify(user)}`,
+    );
+  }
+
+  return id;
+}
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.MENTOR)
@@ -38,13 +58,11 @@ type CurrentUserDoc = UserDocument & { _id: Types.ObjectId };
 export class MentorDashboardController {
   constructor(private readonly dashboardService: MentorDashboardService) {}
 
-  // ─────────────────────────────────────────────
-  // Profile
-  // ─────────────────────────────────────────────
+  // ─── Profile ─────────────────────────────────────────────────────────────
 
   @Get('profile')
   getProfile(@CurrentUser() user: CurrentUserDoc) {
-    return this.dashboardService.getOwnProfile(user._id.toString());
+    return this.dashboardService.getOwnProfile(resolveUserId(user));
   }
 
   @Patch('profile')
@@ -52,12 +70,10 @@ export class MentorDashboardController {
     @CurrentUser() user: CurrentUserDoc,
     @Body() dto: UpdateMentorProfileDto,
   ) {
-    return this.dashboardService.updateOwnProfile(user._id.toString(), dto);
+    return this.dashboardService.updateOwnProfile(resolveUserId(user), dto);
   }
 
-  // ─────────────────────────────────────────────
-  // Availability
-  // ─────────────────────────────────────────────
+  // ─── Availability ─────────────────────────────────────────────────────────
 
   @Post('availability')
   @HttpCode(HttpStatus.CREATED)
@@ -65,12 +81,12 @@ export class MentorDashboardController {
     @CurrentUser() user: CurrentUserDoc,
     @Body() dto: CreateAvailabilityDto,
   ) {
-    return this.dashboardService.createAvailability(user._id.toString(), dto);
+    return this.dashboardService.createAvailability(resolveUserId(user), dto);
   }
 
   @Get('availability')
   getAvailability(@CurrentUser() user: CurrentUserDoc) {
-    return this.dashboardService.getAvailability(user._id.toString());
+    return this.dashboardService.getAvailability(resolveUserId(user));
   }
 
   @Patch('availability/:id')
@@ -80,7 +96,7 @@ export class MentorDashboardController {
     @Body() dto: UpdateAvailabilityDto,
   ) {
     return this.dashboardService.updateAvailability(
-      user._id.toString(),
+      resolveUserId(user),
       id,
       dto,
     );
@@ -92,12 +108,10 @@ export class MentorDashboardController {
     @CurrentUser() user: CurrentUserDoc,
     @Param('id') id: string,
   ) {
-    return this.dashboardService.deleteAvailability(user._id.toString(), id);
+    return this.dashboardService.deleteAvailability(resolveUserId(user), id);
   }
 
-  // ─────────────────────────────────────────────
-  // Sessions
-  // ─────────────────────────────────────────────
+  // ─── Sessions ─────────────────────────────────────────────────────────────
 
   @Get('sessions')
   getMentorSessions(
@@ -107,7 +121,7 @@ export class MentorDashboardController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page?: number,
     @Query('limit', new DefaultValuePipe(10), ParseIntPipe) limit?: number,
   ) {
-    return this.dashboardService.getMentorSessions(user._id.toString(), {
+    return this.dashboardService.getMentorSessions(resolveUserId(user), {
       status,
       page,
       limit,
@@ -120,6 +134,6 @@ export class MentorDashboardController {
     @Param('id') id: string,
     @Body() dto: UpdateEvaluationDto,
   ) {
-    return this.dashboardService.evaluateSession(user._id.toString(), id, dto);
+    return this.dashboardService.evaluateSession(resolveUserId(user), id, dto);
   }
 }
