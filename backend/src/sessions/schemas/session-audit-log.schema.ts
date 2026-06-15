@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
-import { AuditLogStatus } from '../../common/enums/audit-log-status.enum';
+import { AuditLogStatus } from './../../common/enums/audit-log-status.enum';
 
 export type SessionAuditLogDocument = HydratedDocument<SessionAuditLog>;
 
