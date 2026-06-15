@@ -7,11 +7,12 @@ import {
 import { InjectModel, InjectConnection } from '@nestjs/mongoose';
 import { Model, Connection } from 'mongoose';
 import { CreateSessionDto } from './dto/create-session.dto';
+import { UpdateSessionDto } from './dto/update-session.dto';
+import { RescheduleSessionDto } from './dto/reschedule-session.dto'; 
 import { ReviewSession, ReviewSessionDocument } from './schemas/review-session.schema';
 import { SessionAuditLog, SessionAuditLogDocument } from './schemas/session-audit-log.schema';
-import { ReviewSessionStatus } from '../../common/enums/review-session-status.enum';
-import { AuditLogStatus } from '../../common/enums/audit-log-status.enum';
-
+import { ReviewSessionStatus } from '../common/enums/review-session-status.enum';
+import { AuditLogStatus } from '../common/enums/audit-log-status.enum';
 @Injectable()
 export class SessionsService {
   constructor(
@@ -164,6 +165,28 @@ export class SessionsService {
     
     return sessionToUpdate.save();
   }
+
+
+async cancelSession(sessionId: string, studentId: string) {
+    const session = await this.reviewSessionModel.findById(sessionId);
+
+    if (!session) {
+      throw new NotFoundException('Review session not found.');
+    }
+
+    if (session.student.toString() !== studentId) {
+      throw new ConflictException('You are not authorized to cancel this session.');
+    }
+
+    if (session.status !== ReviewSessionStatus.SCHEDULED) {
+      throw new ConflictException(`Cannot cancel a session that is already ${session.status}.`);
+    }
+
+    session.status = ReviewSessionStatus.CANCELED;
+    return session.save();
+  }
+
+
   // --- Helper Methods ---
 
   private simulateAIEvaluation(description: string) {
