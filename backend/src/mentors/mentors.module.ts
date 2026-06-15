@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+
 import {
   MentorAvailability,
   MentorAvailabilitySchema,
@@ -8,18 +9,31 @@ import {
   MentorProfile,
   MentorProfileSchema,
 } from './schemas/mentor-profile.schema';
-import { MentorsController } from './mentors.controller';
-import { MentorsService } from './mentors.service';
+import {
+  ReviewSession,
+  ReviewSessionSchema,
+} from '../sessions/schemas/review-session.schema';
+import {
+  SessionAuditLog,
+  SessionAuditLogSchema,
+} from '../sessions/schemas/session-audit-log.schema';
+
+import { MentorDashboardController } from './mentor-dashboard.controller';
+import { MentorDashboardService } from './mentor-dashboard.service';
+import { SessionsController } from '../sessions/sessions.controller';
+import { SessionsService } from '../sessions/sessions.service';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: MentorProfile.name, schema: MentorProfileSchema },
       { name: MentorAvailability.name, schema: MentorAvailabilitySchema },
+      { name: ReviewSession.name, schema: ReviewSessionSchema },
+      { name: SessionAuditLog.name, schema: SessionAuditLogSchema },
     ]),
   ],
-  controllers: [MentorsController],
-  providers: [MentorsService],
-  exports: [MentorsService, MongooseModule],
+  controllers: [MentorDashboardController, SessionsController],
+  providers: [MentorDashboardService, SessionsService],
+  exports: [MentorDashboardService, SessionsService, MongooseModule],
 })
 export class MentorsModule {}
