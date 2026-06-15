@@ -121,6 +121,49 @@ export class SessionsService {
     return session;
   }
 
+  async rescheduleSession(
+    sessionId: string,
+    rescheduleDto: RescheduleSessionDto,
+    studentId: string,
+  ) {
+    const sessionToUpdate = await this.reviewSessionModel.findById(sessionId);
+
+    if (!sessionToUpdate) {
+      throw new NotFoundException('Session not found.');
+    }
+
+    if (sessionToUpdate.student.toString() !== studentId) {
+      throw new ConflictException('You are not authorized to reschedule this session.');
+    }
+
+    if (sessionToUpdate.status !== ReviewSessionStatus.SCHEDULED) {
+      throw new ConflictException(`Cannot reschedule a ${sessionToUpdate.status} session.`);
+    }
+
+    const newStart = new Date(rescheduleDto.startTime);
+    const newEnd = new Date(rescheduleDto.endTime);
+
+    const overlappingSession = await this.reviewSessionModel.findOne({
+      _id: { $ne: sessionId }, // Ignore the current booking
+      mentor: sessionToUpdate.mentor,
+      status: { $ne: ReviewSessionStatus.CANCELED },
+      $or: [
+        {
+          startTime: { $lt: newEnd },
+          endTime: { $gt: newStart },
+        },
+      ],
+    });
+
+    if (overlappingSession) {
+      throw new ConflictException('The mentor is already booked for this new time slot.');
+    }
+
+    sessionToUpdate.startTime = newStart;
+    sessionToUpdate.endTime = newEnd;
+    
+    return sessionToUpdate.save();
+  }
   // --- Helper Methods ---
 
   private simulateAIEvaluation(description: string) {

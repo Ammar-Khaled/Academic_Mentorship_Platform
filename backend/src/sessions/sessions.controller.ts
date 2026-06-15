@@ -51,4 +51,15 @@ export class SessionsController {
   ) {
     return this.sessionsService.updateStatus(id, status);
   }
+
+
+  @Patch(':id/reschedule')
+  @Roles('student')
+  reschedule(
+    @Param('id') id: string,
+    @Body() rescheduleDto: RescheduleSessionDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.sessionsService.rescheduleSession(id, rescheduleDto, user.sub);
+  }
 }
