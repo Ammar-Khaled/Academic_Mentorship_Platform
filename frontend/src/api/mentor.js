@@ -1,4 +1,4 @@
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 // ─── Profile ──────────────────────────────────────────────────────────────────
 
@@ -9,6 +9,21 @@ export async function getMentorProfile() {
 
 export async function updateMentorProfile(payload) {
   const { data } = await api.patch("/mentor/profile", payload);
+  return data;
+}
+
+// ─── Mentors ─────────────────────────────────────────────────────────────
+export async function getMentors(params = {}) {
+  const { data } = await api.get("/mentors", {
+    params,
+  });
+
+  return data;
+}
+
+
+export async function getMentor(id) {
+  const { data } = await api.get(`/mentors/${id}`);
   return data;
 }
 
@@ -42,6 +57,11 @@ export async function deleteMentorAvailability(id) {
 export async function getMentorSessions(params = {}) {
   const { data } = await api.get("/mentor/sessions", { params });
   return data; // { data: [], total, page, limit }
+}
+
+export async function getPublicMentorAvailability(id) {
+  const { data } = await api.get(`/mentors/${id}/availability`);
+  return data;
 }
 
 // ─── Evaluation ───────────────────────────────────────────────────────────────
