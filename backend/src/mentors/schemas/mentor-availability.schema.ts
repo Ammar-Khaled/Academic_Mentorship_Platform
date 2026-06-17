@@ -3,7 +3,7 @@ import { HydratedDocument, Types } from 'mongoose';
 
 export type MentorAvailabilityDocument = HydratedDocument<MentorAvailability>;
 
-@Schema({ timestamps: { createdAt: true, updatedAt: false } })
+@Schema({ timestamps: { createdAt: true, updatedAt: true } })
 export class MentorAvailability {
   @Prop({ type: Types.ObjectId, ref: 'MentorProfile', required: true })
   mentor: Types.ObjectId;
@@ -20,7 +20,11 @@ export class MentorAvailability {
   @Prop({ required: true, match: /^([01]\d|2[0-3]):[0-5]\d$/ })
   endTime: string;
 
+  @Prop({ default: true })
+  isActive: boolean;
+
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export const MentorAvailabilitySchema =
