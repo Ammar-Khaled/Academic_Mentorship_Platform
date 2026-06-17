@@ -1,7 +1,6 @@
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
-// ─── Profile ──────────────────────────────────────────────────────────────────
-
+// Profile
 export async function getMentorProfile() {
   const { data } = await api.get("/mentor/profile");
   return data;
@@ -12,8 +11,7 @@ export async function updateMentorProfile(payload) {
   return data;
 }
 
-// ─── Availability ─────────────────────────────────────────────────────────────
-
+// Availability
 export async function getMentorAvailability() {
   const { data } = await api.get("/mentor/availability");
   return data;
@@ -34,18 +32,13 @@ export async function deleteMentorAvailability(id) {
   return data;
 }
 
-// ─── Sessions ─────────────────────────────────────────────────────────────────
-
-/**
- * @param {{ status?: string, page?: number, limit?: number }} params
- */
+// Sessions
 export async function getMentorSessions(params = {}) {
   const { data } = await api.get("/mentor/sessions", { params });
-  return data; // { data: [], total, page, limit }
+  return data;
 }
 
-// ─── Evaluation ───────────────────────────────────────────────────────────────
-
+// Evaluation
 export async function evaluateMentorSession(sessionId, payload) {
   const { data } = await api.patch(`/mentor/sessions/${sessionId}/evaluation`, payload);
   return data;
