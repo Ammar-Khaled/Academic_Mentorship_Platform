@@ -1,6 +1,8 @@
 import {
+  IsBoolean,
   IsInt,
   IsNotEmpty,
+  IsOptional,
   IsString,
   Matches,
   Max,
@@ -26,4 +28,8 @@ export class CreateAvailabilityDto {
     message: 'endTime must be a valid 24-hour time in HH:mm format',
   })
   endTime: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }

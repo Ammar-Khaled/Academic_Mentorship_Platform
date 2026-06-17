@@ -11,13 +11,13 @@ export class MentorProfile {
   @Prop({ type: Types.ObjectId, ref: 'Stack', required: true })
   stack: Types.ObjectId;
 
-  @Prop({ required: true, trim: true })
+  @Prop({ trim: true })
   name: string;
 
-  @Prop({ required: true, trim: true })
+  @Prop({ trim: true })
   title: string;
 
-  @Prop({ required: true, trim: true })
+  @Prop({ trim: true })
   bio: string;
 
   @Prop({ default: false })
