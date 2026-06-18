@@ -1,7 +1,6 @@
 import { api } from "@/lib/api";
 
 // ─── Profile ──────────────────────────────────────────────────────────────────
-
 export async function getMentorProfile() {
   const { data } = await api.get("/mentor/profile");
   return data;
@@ -49,14 +48,10 @@ export async function deleteMentorAvailability(id) {
   return data;
 }
 
-// ─── Sessions ─────────────────────────────────────────────────────────────────
-
-/**
- * @param {{ status?: string, page?: number, limit?: number }} params
- */
+// Sessions
 export async function getMentorSessions(params = {}) {
   const { data } = await api.get("/mentor/sessions", { params });
-  return data; // { data: [], total, page, limit }
+  return data;
 }
 
 export async function getPublicMentorAvailability(id) {
