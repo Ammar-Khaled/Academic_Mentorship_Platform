@@ -18,6 +18,8 @@ import {
   SessionAuditLogSchema,
 } from '../sessions/schemas/session-audit-log.schema';
 
+import { MentorsController } from './mentors.controller';
+import { MentorsService } from './mentors.service';
 import { MentorDashboardController } from './mentor-dashboard.controller';
 import { MentorDashboardService } from './mentor-dashboard.service';
 import { SessionsController } from '../sessions/sessions.controller';
@@ -32,8 +34,8 @@ import { SessionsService } from '../sessions/sessions.service';
       { name: SessionAuditLog.name, schema: SessionAuditLogSchema },
     ]),
   ],
-  controllers: [MentorDashboardController, SessionsController],
-  providers: [MentorDashboardService, SessionsService],
-  exports: [MentorDashboardService, SessionsService, MongooseModule],
+  controllers: [MentorDashboardController, MentorsController, SessionsController],
+  providers: [MentorDashboardService, MentorsService, SessionsService],
+  exports: [MentorDashboardService, MentorsService, SessionsService, MongooseModule],
 })
 export class MentorsModule {}
