@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
-import { ThemeProvider } from "@/components/theme/theme-provider";
+import { ThemeProvider } from "@/components/layout/theme-provider";
 import { useAuthStore } from "@/stores/auth-store";
 import { router } from "@/routes";
 
