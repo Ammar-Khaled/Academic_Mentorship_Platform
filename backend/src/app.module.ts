@@ -8,6 +8,7 @@ import { MentorsModule } from './mentors/mentors.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { StacksModule } from './stacks/stacks.module';
 import { StudentsModule } from './students/students.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { StudentsModule } from './students/students.module';
       }),
     }),
     AuthModule,
+    AdminModule,
     StacksModule,
     MentorsModule,
     StudentsModule,

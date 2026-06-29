@@ -1,0 +1,96 @@
+{
+  "header": {
+    "title": "Mentorship Hub",
+    "subtitle": "Code review platform",
+    "signIn": "Signed in as"
+  },
+  "nav": {
+    "login": "Log in",
+    "signup": "Sign up",
+    "logout": "Log out",
+    "dashboard": "Dashboard"
+  },
+  "dashboard": {
+    "student": {
+      "eyebrow": "Student workspace",
+      "title": "Your learning dashboard",
+      "description": "Track booked reviews, manage upcoming sessions, and review mentor feedback."
+    },
+    "mentor": {
+      "eyebrow": "Mentor workspace",
+      "title": "Your mentorship dashboard",
+      "description": "Set availability, monitor pending reviews, and deliver thoughtful evaluations."
+    },
+    "admin": {
+      "eyebrow": "Admin workspace",
+      "title": "Platform administration",
+      "description": "Moderate users, approve mentors, and manage technical stack categories."
+    }
+  },
+  "admin": {
+    "sidebar": {
+      "title": "Admin Panel",
+      "overview": "Overview",
+      "users": "User Management",
+      "audit": "Audit Logs",
+      "stacks": "Tech Stacks",
+      "logout": "Logout"
+    },
+    "users": {
+      "title": "User Management",
+      "description": "Approve mentor applications, block problematic users, and manage user status.",
+      "pending": "Pending Approvals",
+      "all": "All Users",
+      "approved": "Approved",
+      "blocked": "Blocked",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "actions": "Actions",
+      "approve": "Approve",
+      "block": "Block",
+      "unblock": "Unblock",
+      "loading": "Loading user data...",
+      "noPending": "No pending approvals at this time."
+    },
+    "audit": {
+      "title": "AI Audit Logs",
+      "description": "Monitor session reviews, AI analysis results, and platform audit trails.",
+      "analyzed": "Total Analyzed",
+      "success": "Success Rate",
+      "confidence": "Avg Confidence",
+      "latency": "Avg Latency",
+      "charts": "Charts & Analytics",
+      "logs": "Recent Logs",
+      "successful": "Successful",
+      "failed": "Failed",
+      "loading": "Loading audit data..."
+    },
+    "stacks": {
+      "title": "Tech Stack Management",
+      "description": "Create, edit, and manage technology stack categories.",
+      "newStack": "New Stack",
+      "create": "Create New Stack",
+      "name": "Stack Name",
+      "description": "Description",
+      "mentors": "Mentors",
+      "students": "Students",
+      "created": "Created",
+      "delete": "Delete",
+      "edit": "Edit",
+      "noStacks": "No stacks created yet.",
+      "cancel": "Cancel",
+      "save": "Save Changes"
+    }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "cancel": "Cancel",
+    "close": "Close"
+  }
+}
