@@ -20,11 +20,14 @@ export class MentorProfile {
   @Prop({ trim: true })
   bio: string;
 
-  @Prop({ default: false })
+  @Prop({ default: true })
   isVerified: boolean;
 
   @Prop({ default: 0, min: 0, max: 5 })
   averageRating: number;
+
+  @Prop({ default: 0, min: 0 })
+  totalReviews: number;
 
   @Prop({ required: true, min: 0 })
   hourlyRate: number;

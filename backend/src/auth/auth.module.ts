@@ -5,16 +5,23 @@ import { PassportModule } from '@nestjs/passport';
 import { UsersModule } from '../users/users.module';
 import { MentorsModule } from '../mentors/mentors.module';
 import { StacksModule } from '../stacks/stacks.module';
+import { StudentsModule } from '../students/students.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { UserApproval, UserApprovalSchema } from '../admin/schemas/user-approval.schema';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
     UsersModule,
     MentorsModule,
     StacksModule,
+    StudentsModule,
     PassportModule,
+    MongooseModule.forFeature([
+      { name: UserApproval.name, schema: UserApprovalSchema },
+    ]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
