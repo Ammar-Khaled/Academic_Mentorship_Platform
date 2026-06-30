@@ -12,8 +12,54 @@ import {
 export class StudentsService {
   constructor(
     @InjectModel(StudentProfile.name)
-    private readonly studentProfileModel: Model<StudentProfile>,
+    private readonly studentProfileModel: Model<StudentProfileDocument>,
   ) {}
+
+  async getOwnProfile(userId: string): Promise<StudentProfileDocument> {
+    let student = await this.studentProfileModel
+      .findOne({ user: userId })
+      .populate('user', 'email role')
+      .exec();
+
+    if (!student) {
+      student = await this.studentProfileModel.create({
+        user: userId,
+        name: 'Student',
+        bio: '',
+        university: '',
+        major: '',
+      });
+      student = await student.populate('user', 'email role');
+    }
+
+    return student;
+  }
+
+  async updateOwnProfile(
+    userId: string,
+    updateStudentDto: UpdateStudentDto,
+  ): Promise<StudentProfileDocument> {
+    let student = await this.studentProfileModel
+      .findOneAndUpdate({ user: userId }, updateStudentDto, {
+        returnDocument: 'after',
+        runValidators: true,
+      })
+      .populate('user', 'email role')
+      .exec();
+
+    if (!student) {
+      student = await this.studentProfileModel.create({
+        user: userId,
+        name: updateStudentDto.name || 'Student',
+        bio: updateStudentDto.bio || '',
+        university: updateStudentDto.university || '',
+        major: updateStudentDto.major || '',
+      });
+      student = await student.populate('user', 'email role');
+    }
+
+    return student;
+  }
 
   create(createStudentDto: CreateStudentDto): Promise<StudentProfileDocument> {
     return this.studentProfileModel.create(createStudentDto);

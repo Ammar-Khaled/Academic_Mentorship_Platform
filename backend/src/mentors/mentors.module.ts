@@ -22,11 +22,11 @@ import { MentorsController } from './mentors.controller';
 import { MentorsService } from './mentors.service';
 import { MentorDashboardController } from './mentor-dashboard.controller';
 import { MentorDashboardService } from './mentor-dashboard.service';
-import { SessionsController } from '../sessions/sessions.controller';
-import { SessionsService } from '../sessions/sessions.service';
+import { StudentsModule } from '../students/students.module';
 
 @Module({
   imports: [
+    StudentsModule,
     MongooseModule.forFeature([
       { name: MentorProfile.name, schema: MentorProfileSchema },
       { name: MentorAvailability.name, schema: MentorAvailabilitySchema },
@@ -34,8 +34,8 @@ import { SessionsService } from '../sessions/sessions.service';
       { name: SessionAuditLog.name, schema: SessionAuditLogSchema },
     ]),
   ],
-  controllers: [MentorDashboardController, MentorsController, SessionsController],
-  providers: [MentorDashboardService, MentorsService, SessionsService],
-  exports: [MentorDashboardService, MentorsService, SessionsService, MongooseModule],
+  controllers: [MentorDashboardController, MentorsController],
+  providers: [MentorDashboardService, MentorsService],
+  exports: [MentorDashboardService, MentorsService, MongooseModule],
 })
 export class MentorsModule {}
