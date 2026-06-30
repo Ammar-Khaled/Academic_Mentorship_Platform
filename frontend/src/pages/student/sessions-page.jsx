@@ -1,69 +1,115 @@
-import { useState } from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Empty, EmptyDescription, EmptyTitle } from '@/components/ui/empty';
-import { Spinner } from '@/components/ui/spinner';
-import { PageHeader } from '@/components/layout/page-header';
-import { SessionCard } from '@/components/sessions/session-card';
-import { RescheduleDialog } from '@/components/sessions/reschedule-dialog';
-import { useUpcomingSessions, useSessionHistory, useCancelSession } from '@/hooks/use-sessions';
+import { useState } from "react";
+import { toast } from "sonner";
+import { BookSessionDialog } from "@/components/sessions/book-session-dialog";
+import { RescheduleDialog } from "@/components/sessions/reschedule-dialog";
+import { EvaluateSessionDialog } from "@/components/sessions/evaluate-session-dialog";
+import { SessionCard } from "@/components/sessions/session-card";
+import { Spinner } from "@/components/ui/spinner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useCancelSession, useRescheduleSession, useSessionHistory, useUpcomingSessions } from "@/hooks/use-sessions";
+import { Button } from "@/components/ui/button";
 
-export function StudentSessionsPage() {
-  const [rescheduleTarget, setRescheduleTarget] = useState(null);
-  const upcoming = useUpcomingSessions();
-  const history = useSessionHistory();
+export default function StudentSessionsPage() {
+  const [reschedulingSession, setReschedulingSession] = useState(null);
+
+  // ── Data ──────────────────────────────────────────────────────────────────
+  const { data: upcoming = [], isLoading: upcomingLoading, error: upcomingError } = useUpcomingSessions();
+
+  const { data: history = [], isLoading: historyLoading, error: historyError } = useSessionHistory();
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
   const cancelMutation = useCancelSession();
+  const rescheduleMutation = useRescheduleSession();
 
+  // ── Handlers ──────────────────────────────────────────────────────────────
+  function handleCancel(sessionId) {
+    cancelMutation.mutate(sessionId);
+  }
+
+  function handleRescheduleOpen(session) {
+    setReschedulingSession(session);
+  }
+
+  function handleRescheduleSubmit(payload) {
+    if (!reschedulingSession) return;
+
+    rescheduleMutation.mutate(
+      { id: reschedulingSession._id, ...payload },
+      {
+        onSuccess: () => {
+          toast.success("Session rescheduled successfully!");
+          setReschedulingSession(null);
+        },
+        onError: (error) => {
+          const message = error?.response?.data?.message ?? "Failed to reschedule session.";
+          toast.error(message);
+        },
+      },
+    );
+  }
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex flex-col gap-6">
-      <PageHeader
-        eyebrow="My sessions"
-        title="Manage your bookings"
-        description="View upcoming reviews, your session history, and make changes when you need to."
-      />
+    <div className="mx-auto max-w-2xl space-y-6 p-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">My Sessions</h1>
+      </div>
 
       <Tabs defaultValue="upcoming">
-        <TabsList>
-          <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
-          <TabsTrigger value="history">History</TabsTrigger>
+        <TabsList className="w-full">
+          <TabsTrigger value="upcoming" className="flex-1">
+            Upcoming
+            {upcoming.length > 0 && <span className="ml-1.5 rounded-full bg-primary px-1.5 py-0.5 text-[11px] font-medium text-primary-foreground">{upcoming.length}</span>}
+          </TabsTrigger>
+          <TabsTrigger value="history" className="flex-1">
+            History
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="upcoming" className="space-y-3 pt-4">
-          {upcoming.isLoading && <Spinner className="mx-auto size-6" />}
-          {upcoming.data?.length === 0 && (
-            <Empty>
-              <EmptyTitle>No upcoming sessions</EmptyTitle>
-              <EmptyDescription>Book a session with a mentor to get started.</EmptyDescription>
-            </Empty>
+        {/* ── Upcoming ──────────────────────────────────────────────────── */}
+        <TabsContent value="upcoming" className="mt-4 space-y-3">
+          {upcomingLoading && (
+            <div className="flex justify-center py-8">
+              <Spinner className="size-6" />
+            </div>
           )}
-          {upcoming.data?.map((session) => (
-            <SessionCard
-              key={session._id}
-              session={session}
-              onReschedule={setRescheduleTarget}
-              onCancel={(id) => cancelMutation.mutate(id)}
-            />
+
+          {upcomingError && <p className="py-6 text-center text-sm text-destructive">Failed to load upcoming sessions.</p>}
+
+          {!upcomingLoading && !upcomingError && upcoming.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No upcoming sessions. Book one below!</p>}
+
+          {upcoming.map((session) => (
+            <SessionCard key={session._id} session={session} showActions onReschedule={handleRescheduleOpen} onCancel={handleCancel} />
           ))}
         </TabsContent>
 
-        <TabsContent value="history" className="space-y-3 pt-4">
-          {history.isLoading && <Spinner className="mx-auto size-6" />}
-          {history.data?.length === 0 && (
-            <Empty>
-              <EmptyTitle>No past sessions</EmptyTitle>
-              <EmptyDescription>Your completed and canceled sessions will appear here.</EmptyDescription>
-            </Empty>
+        {/* ── History ───────────────────────────────────────────────────── */}
+        <TabsContent value="history" className="mt-4 space-y-3">
+          {historyLoading && (
+            <div className="flex justify-center py-8">
+              <Spinner className="size-6" />
+            </div>
           )}
-          {history.data?.map((session) => (
-            <SessionCard key={session._id} session={session} showActions={false} />
+
+          {historyError && <p className="py-6 text-center text-sm text-destructive">Failed to load session history.</p>}
+
+          {!historyLoading && !historyError && history.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No past sessions yet.</p>}
+
+          {history.map((session) => (
+            <SessionCard key={session._id} session={session} showActions={false} showEvaluate={true} />
           ))}
         </TabsContent>
       </Tabs>
 
-      {rescheduleTarget && (
+      {/* ── Reschedule dialog (controlled externally) ──────────────────────── */}
+      {reschedulingSession && (
         <RescheduleDialog
-          session={rescheduleTarget}
-          open={!!rescheduleTarget}
-          onOpenChange={(open) => !open && setRescheduleTarget(null)}
+          session={reschedulingSession}
+          onReschedule={handleRescheduleSubmit}
+          open={Boolean(reschedulingSession)}
+          onOpenChange={(isOpen) => {
+            if (!isOpen) setReschedulingSession(null);
+          }}
         />
       )}
     </div>
