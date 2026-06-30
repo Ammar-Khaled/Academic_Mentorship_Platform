@@ -1,31 +1,29 @@
 import {
   IsDateString,
-  IsEnum,
   IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
 } from 'class-validator';
-import { ReviewSessionStatus } from '../../common/enums/review-session-status.enum';
 
 export class CreateSessionDto {
   @IsMongoId()
+  @IsNotEmpty()
   mentor: string;
 
+  @IsOptional()
   @IsMongoId()
-  student: string;
+  student?: string;
 
   @IsDateString()
+  @IsNotEmpty()
   startTime: string;
 
   @IsDateString()
+  @IsNotEmpty()
   endTime: string;
 
-  @IsString()
-  @IsNotEmpty()
-  description: string;
-
   @IsOptional()
-  @IsEnum(ReviewSessionStatus)
-  status?: ReviewSessionStatus;
+  @IsString()
+  description?: string;
 }
