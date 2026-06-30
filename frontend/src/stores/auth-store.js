@@ -32,7 +32,9 @@ export const useAuthStore = create((set, get) => ({
 
   async register(payload) {
     const { data } = await api.post('/auth/register', payload);
-    get().setAuth(data);
+    if (data.access_token) {
+      get().setAuth(data);
+    }
     return data;
   },
 

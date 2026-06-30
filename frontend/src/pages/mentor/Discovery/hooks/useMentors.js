@@ -5,7 +5,8 @@ export function useMentors({
   page = 1,
   keyword = "",
   sortBy = "",
-}) {
+  limit = 6,
+} = {}) {
   const [loading, setLoading] = useState(true);
 
   const [mentors, setMentors] = useState([]);
@@ -13,7 +14,7 @@ export function useMentors({
 
   useEffect(() => {
     loadMentors();
-  }, [page, keyword, sortBy]);
+  }, [page, keyword, sortBy, limit]);
 
   async function loadMentors() {
     try {
@@ -21,7 +22,7 @@ export function useMentors({
 
       const result = await getMentors({
         page,
-        limit: 6,
+        limit,
         keyword,
         sort_by: sortBy,
       });

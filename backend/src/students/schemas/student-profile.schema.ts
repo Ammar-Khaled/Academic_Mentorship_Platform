@@ -11,6 +11,15 @@ export class StudentProfile {
   @Prop({ required: true, trim: true })
   name: string;
 
+  @Prop({ trim: true, default: '' })
+  bio: string;
+
+  @Prop({ trim: true, default: '' })
+  university: string;
+
+  @Prop({ trim: true, default: '' })
+  major: string;
+
   createdAt: Date;
   updatedAt: Date;
 }

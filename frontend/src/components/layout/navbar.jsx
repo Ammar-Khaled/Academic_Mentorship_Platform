@@ -1,9 +1,9 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { ThemeToggle } from './theme-toggle';
-import { LanguageSwitcher } from './language-switcher';
-import { useAuthStore } from '@/stores/auth-store';
-import { Button } from '@/components/ui/button';
-import { LogOut } from 'lucide-react';
+import { Link, useNavigate } from "react-router-dom";
+import { ThemeToggle } from "./theme-toggle";
+import { LanguageSwitcher } from "./language-switcher";
+import { useAuthStore } from "@/stores/auth-store";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
@@ -11,13 +11,13 @@ export function Navbar() {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const getDashboardLink = () => {
-    if (user?.role === 'admin') return '/admin/users';
-    if (user?.role === 'mentor') return '/mentor/dashboard';
-    return '/dashboard';
+    if (user?.role === "admin") return "/admin";
+    if (user?.role === "mentor") return "/mentor";
+    return "/student";
   };
 
   return (
@@ -27,12 +27,9 @@ export function Navbar() {
           <Link to="/" className="flex !flex-row items-center gap-2">
             <span className="text-base sm:text-lg font-bold tracking-tight text-primary whitespace-nowrap">Mentorship Hub</span>
           </Link>
-          
+
           {isAuthenticated && (
-            <Link 
-              to={getDashboardLink()} 
-              className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-primary md:block"
-            >
+            <Link to={getDashboardLink()} className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-primary md:block">
               Dashboard
             </Link>
           )}

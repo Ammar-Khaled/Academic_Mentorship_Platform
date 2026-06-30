@@ -19,6 +19,10 @@ import {
   ReviewSession,
   ReviewSessionDocument,
 } from '../sessions/schemas/review-session.schema';
+import {
+  StudentProfile,
+  StudentProfileDocument,
+} from '../students/schemas/student-profile.schema';
 
 import { UpdateMentorProfileDto } from './dto/update-mentor-profile.dto';
 import { CreateAvailabilityDto } from './dto/create-availability.dto';
@@ -59,6 +63,9 @@ export class MentorDashboardService {
 
     @InjectModel(ReviewSession.name)
     private readonly reviewSessionModel: Model<ReviewSessionDocument>,
+
+    @InjectModel(StudentProfile.name)
+    private readonly studentProfileModel: Model<StudentProfileDocument>,
   ) {}
 
   private assertValidObjectId(value: string, fieldName: string) {
@@ -69,9 +76,7 @@ export class MentorDashboardService {
     }
   }
 
-  // ─────────────────────────────────────────────
-  // Profile
-  // ─────────────────────────────────────────────
+  // ─── Profile ──────────────────────────────────────────────────────────────
 
   async getOwnProfile(userId: string): Promise<MentorProfileDocument> {
     const profile = await this.mentorProfileModel
@@ -91,7 +96,6 @@ export class MentorDashboardService {
     userId: string,
     updateDto: UpdateMentorProfileDto,
   ): Promise<MentorProfileDocument> {
-    // Defense-in-depth: only allow these fields to be updated even if whitelist is not enabled globally.
     const update: Record<string, unknown> = {};
 
     if (updateDto.stack !== undefined) {
@@ -121,9 +125,7 @@ export class MentorDashboardService {
     return profile;
   }
 
-  // ─────────────────────────────────────────────
-  // Availability
-  // ─────────────────────────────────────────────
+  // ─── Availability ─────────────────────────────────────────────────────────
 
   private async resolveMentorProfileId(
     userId: string,
@@ -300,9 +302,7 @@ export class MentorDashboardService {
     return { message: 'Availability slot deleted successfully' };
   }
 
-  // ─────────────────────────────────────────────
-  // Sessions
-  // ─────────────────────────────────────────────
+  // ─── Sessions ─────────────────────────────────────────────────────────────
 
   async getMentorSessions(
     userId: string,
@@ -312,38 +312,46 @@ export class MentorDashboardService {
 
     const { status, page = 1, limit = 10 } = filter;
 
-    if (page < 1) {
-      throw new BadRequestException('page must be >= 1');
-    }
-    if (limit < 1 || limit > 100) {
+    if (page < 1) throw new BadRequestException('page must be >= 1');
+    if (limit < 1 || limit > 100)
       throw new BadRequestException('limit must be between 1 and 100');
-    }
 
     const query: Record<string, unknown> = { mentor: mentorId };
-
-    if (status) {
-      query.status = status;
-    }
+    if (status) query.status = status;
 
     const skip = (page - 1) * limit;
 
     const [data, total] = await Promise.all([
       this.reviewSessionModel
         .find(query)
-        .populate('student', 'name')
+        .populate({ path: 'student', select: 'email role' })
         .sort({ startTime: -1 })
         .skip(skip)
         .limit(limit)
+        .lean()
         .exec(),
       this.reviewSessionModel.countDocuments(query).exec(),
     ]);
 
-    return { data, total, page, limit };
+    const studentUserIds = data.map((s: any) => s.student._id);
+    const profiles = await this.studentProfileModel
+      .find({ user: { $in: studentUserIds } })
+      .lean()
+      .exec();
+    
+    const profileMap = new Map(profiles.map(p => [p.user.toString(), p]));
+
+    data.forEach((session: any) => {
+      const profile = profileMap.get(session.student._id.toString());
+      if (profile) {
+        session.student.name = profile.name;
+      }
+    });
+
+    return { data: data as any, total, page, limit };
   }
 
-  // ─────────────────────────────────────────────
-  // Evaluation Notes
-  // ─────────────────────────────────────────────
+  // ─── Evaluation ───────────────────────────────────────────────────────────
 
   async evaluateSession(
     userId: string,

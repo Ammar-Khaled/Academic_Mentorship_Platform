@@ -3,15 +3,13 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, Types } from 'mongoose';
+import { Model, Types, SortOrder } from 'mongoose'; // ← add SortOrder
 
 import {
   MentorProfile,
   MentorProfileDocument,
 } from './schemas/mentor-profile.schema';
-
 import {
   MentorAvailability,
   MentorAvailabilityDocument,
@@ -33,52 +31,37 @@ export class MentorsService {
     startTime: string,
     endTime: string,
     duration = 45,
-    ): string[] {
-    const slots: string[] = [];
+  ): { start: string; end: string }[] {
+    const slots: { start: string; end: string }[] = [];
 
-    const [startHour, startMinute] = startTime
-        .split(':')
-        .map(Number);
+    const [startHour, startMinute] = startTime.split(':').map(Number);
+    const [endHour, endMinute] = endTime.split(':').map(Number);
 
-    const [endHour, endMinute] = endTime
-        .split(':')
-        .map(Number);
-
-    let current =
-        startHour * 60 + startMinute;
-
-    const end =
-        endHour * 60 + endMinute;
+    let current = startHour * 60 + startMinute;
+    const end = endHour * 60 + endMinute;
 
     while (current + duration <= end) {
-        const hours = Math.floor(current / 60)
+      const slotStart = `${Math.floor(current / 60)
         .toString()
-        .padStart(2, '0');
+        .padStart(2, '0')}:${(current % 60).toString().padStart(2, '0')}`;
 
-        const minutes = (current % 60)
+      const slotEnd = `${Math.floor((current + duration) / 60)
         .toString()
-        .padStart(2, '0');
+        .padStart(2, '0')}:${((current + duration) % 60)
+        .toString()
+        .padStart(2, '0')}`;
 
-        slots.push(`${hours}:${minutes}`);
-
-        current += duration;
+      slots.push({ start: slotStart, end: slotEnd });
+      current += duration;
     }
 
     return slots;
-    }
+  }
 
   async findAll(filter: FindMentorsDto) {
-    const {
-      page = 1,
-      limit = 10,
-      keyword,
-      stack,
-      sortBy,
-    } = filter;
+    const { page = 1, limit = 10, keyword, stack, sortBy } = filter;
 
-    const query: any = {
-      isVerified: true,
-    };
+    const query: Record<string, unknown> = {};
 
     if (keyword) {
       query.$or = [
@@ -92,23 +75,13 @@ export class MentorsService {
       if (!Types.ObjectId.isValid(stack)) {
         throw new BadRequestException('Invalid stack id');
       }
-
       query.stack = new Types.ObjectId(stack);
     }
 
-    let sort: any = {};
-
-    switch (sortBy) {
-      case 'rating':
-        sort = { averageRating: -1 };
-        break;
-
-      case 'price':
-        sort = { hourlyRate: 1 };
-        break;
-
-      default:
-        sort = { averageRating: -1 };
+    // ← Use Record<string, SortOrder> so TypeScript accepts -1 and 1
+    let sort: Record<string, SortOrder> = { averageRating: -1 };
+    if (sortBy === 'price') {
+      sort = { hourlyRate: 1 };
     }
 
     const skip = (page - 1) * limit;
@@ -121,16 +94,10 @@ export class MentorsService {
         .skip(skip)
         .limit(limit)
         .exec(),
-
       this.mentorProfileModel.countDocuments(query),
     ]);
 
-    return {
-      data,
-      total,
-      page,
-      limit,
-    };
+    return { data, total, page, limit };
   }
 
   async findOne(id: string) {
@@ -153,28 +120,17 @@ export class MentorsService {
 
   async getAvailability(id: string) {
     if (!Types.ObjectId.isValid(id)) {
-        throw new BadRequestException(
-        'Invalid mentor id',
-        );
+      throw new BadRequestException('Invalid mentor id');
     }
 
-    const availabilities =
-        await this.mentorAvailabilityModel
-        .find({
-            mentor: new Types.ObjectId(id),
-        })
-        .sort({
-            dayOfWeek: 1,
-            startTime: 1,
-        })
-        .exec();
+    const availabilities = await this.mentorAvailabilityModel
+      .find({ mentor: new Types.ObjectId(id) })
+      .sort({ dayOfWeek: 1, startTime: 1 })
+      .exec();
 
     return availabilities.map((item) => ({
-        dayOfWeek: item.dayOfWeek,
-        slots: this.generateSlots(
-        item.startTime,
-        item.endTime,
-        ),
+      dayOfWeek: item.dayOfWeek,
+      slots: this.generateSlots(item.startTime, item.endTime),
     }));
-    }
+  }
 }

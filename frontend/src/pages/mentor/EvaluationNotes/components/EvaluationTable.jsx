@@ -22,30 +22,13 @@ export function EvaluationTable({ sessions = [], onView, onEdit }) {
                 <td className="px-4 py-3 font-medium">{getStudentName(session)}</td>
                 <td className="px-4 py-3 text-muted-foreground">{formatSessionDate(session.startTime)}</td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${
-                      reviewed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
-                    {reviewed ? "Completed" : "Pending"}
-                  </span>
+                  <span className={`inline-flex rounded-full px-2 py-1 text-xs font-medium ${reviewed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>{reviewed ? "Completed" : "Pending"}</span>
                 </td>
                 <td className="px-4 py-3">{typeof session.rating === "number" ? session.rating : "-"}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onView(session)}
-                      className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs font-medium"
-                    >
+                    <button type="button" onClick={() => onView(session)} className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs font-medium">
                       View
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => onEdit(session)}
-                      className="inline-flex h-8 items-center rounded-md border border-border px-3 text-xs font-medium"
-                    >
-                      {reviewed ? "Edit" : "Add Note"}
                     </button>
                   </div>
                 </td>

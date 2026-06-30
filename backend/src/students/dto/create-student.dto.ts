@@ -1,4 +1,4 @@
-import { IsMongoId, IsNotEmpty, IsString } from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateStudentDto {
   @IsMongoId()
@@ -7,4 +7,16 @@ export class CreateStudentDto {
   @IsString()
   @IsNotEmpty()
   name: string;
+
+  @IsString()
+  @IsOptional()
+  bio?: string;
+
+  @IsString()
+  @IsOptional()
+  university?: string;
+
+  @IsString()
+  @IsOptional()
+  major?: string;
 }

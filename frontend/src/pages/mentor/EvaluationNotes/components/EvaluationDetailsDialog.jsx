@@ -39,23 +39,6 @@ export function EvaluationDetailsDialog({ session, open, onClose, onEdit }) {
           <div className="text-xs text-muted-foreground">Feedback Notes</div>
           <p className="text-sm text-foreground">{session.evaluationNotes || "No notes provided yet."}</p>
         </div>
-
-        <div className="mt-4 space-y-2 rounded-md border border-border p-3">
-          <div className="text-xs text-muted-foreground">Recommendations</div>
-          <p className="text-sm text-muted-foreground">
-            Recommendations are not part of the current backend evaluation payload.
-          </p>
-        </div>
-
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={() => onEdit(session)}
-            className="inline-flex h-9 items-center rounded-md border border-border px-3 text-sm"
-          >
-            {session.evaluationNotes ? "Edit Evaluation" : "Add Evaluation"}
-          </button>
-        </div>
       </div>
     </div>
   );

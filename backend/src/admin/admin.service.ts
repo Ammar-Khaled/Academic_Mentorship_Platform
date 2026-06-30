@@ -13,6 +13,11 @@ import {
 } from './schemas/user-approval.schema';
 import { ApproveUserDto } from './dto/approve-user.dto';
 import { BlockUserDto } from './dto/block-user.dto';
+import { UserRole } from '../common/enums/user-role.enum';
+import {
+  MentorProfile,
+  MentorProfileDocument,
+} from '../mentors/schemas/mentor-profile.schema';
 
 @Injectable()
 export class AdminService {
@@ -21,6 +26,8 @@ export class AdminService {
     private readonly userModel: Model<UserDocument>,
     @InjectModel(UserApproval.name)
     private readonly userApprovalModel: Model<UserApprovalDocument>,
+    @InjectModel(MentorProfile.name)
+    private readonly mentorProfileModel: Model<MentorProfileDocument>,
   ) {}
 
   async getPendingUsers() {
@@ -92,6 +99,13 @@ export class AdminService {
     }
 
     await approval.save();
+
+    if (user.role === UserRole.MENTOR) {
+      await this.mentorProfileModel
+        .updateOne({ user: userObjectId }, { $set: { isVerified: true } })
+        .exec();
+    }
+
     return approval.populate('user', 'email role createdAt');
   }
 
@@ -129,6 +143,13 @@ export class AdminService {
     }
 
     await approval.save();
+
+    if (user.role === UserRole.MENTOR) {
+      await this.mentorProfileModel
+        .updateOne({ user: userObjectId }, { $set: { isVerified: false } })
+        .exec();
+    }
+
     return approval.populate('user', 'email role createdAt');
   }
 
@@ -152,6 +173,14 @@ export class AdminService {
     approval.blockedBy = undefined;
 
     await approval.save();
+
+    const user = await this.userModel.findById(userObjectId).lean().exec();
+    if (user && user.role === UserRole.MENTOR) {
+      await this.mentorProfileModel
+        .updateOne({ user: userObjectId }, { $set: { isVerified: false } })
+        .exec();
+    }
+
     return approval.populate('user', 'email role createdAt');
   }
 

@@ -70,8 +70,20 @@ export function AdminUserManagementPage() {
         api.get('/admin/users/pending'),
       ]);
 
-      setUsers(allUsersRes.data || []);
-      setPendingUsers(pendingRes.data || []);
+      const mapUser = (approval) => {
+        if (!approval || !approval.user) return null;
+        return {
+          _id: approval.user._id,
+          email: approval.user.email,
+          role: approval.user.role,
+          status: approval.status,
+          createdAt: approval.user.createdAt || approval.createdAt,
+          approvalId: approval._id,
+        };
+      };
+
+      setUsers((allUsersRes.data || []).map(mapUser).filter(Boolean));
+      setPendingUsers((pendingRes.data || []).map(mapUser).filter(Boolean));
     } catch (error) {
       console.error('Failed to fetch users:', error);
     } finally {
@@ -82,7 +94,7 @@ export function AdminUserManagementPage() {
   const handleApprove = async (userId) => {
     try {
       await api.post(`/admin/users/${userId}/approve`, {
-        notes: actionNotes,
+        approvalNotes: actionNotes,
       });
       setActionType(null);
       setSelectedUser(null);
@@ -96,7 +108,7 @@ export function AdminUserManagementPage() {
   const handleBlock = async (userId) => {
     try {
       await api.post(`/admin/users/${userId}/block`, {
-        reason: actionNotes,
+        blockReason: actionNotes,
       });
       setActionType(null);
       setSelectedUser(null);
@@ -104,6 +116,18 @@ export function AdminUserManagementPage() {
       await fetchUsers();
     } catch (error) {
       console.error('Failed to block user:', error);
+    }
+  };
+
+  const handleUnblock = async (userId) => {
+    try {
+      await api.post(`/admin/users/${userId}/unblock`);
+      setActionType(null);
+      setSelectedUser(null);
+      setActionNotes('');
+      await fetchUsers();
+    } catch (error) {
+      console.error('Failed to unblock user:', error);
     }
   };
 
@@ -390,6 +414,8 @@ export function AdminUserManagementPage() {
                   await handleApprove(selectedUser._id);
                 } else if (actionType === 'block') {
                   await handleBlock(selectedUser._id);
+                } else if (actionType === 'unblock') {
+                  await handleUnblock(selectedUser._id);
                 }
               }}
               className={actionType === 'block' ? 'bg-red-600' : ''}

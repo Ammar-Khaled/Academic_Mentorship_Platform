@@ -1,27 +1,32 @@
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Textarea } from '@/components/ui/textarea';
-import { Field, FieldLabel, FieldError } from '@/components/ui/field';
-import { Spinner } from '@/components/ui/spinner';
-import { TimeSlotPicker, addMinutes } from './time-slot-picker';
-import { bookSessionSchema } from '@/lib/validations';
-import { useBookSession } from '@/hooks/use-sessions';
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Textarea } from "@/components/ui/textarea";
+import { Field, FieldLabel, FieldError } from "@/components/ui/field";
+import { Spinner } from "@/components/ui/spinner";
+import { TimeSlotPicker, addMinutes } from "./time-slot-picker";
+import { bookSessionSchema } from "@/lib/validations";
+import { useBookSession, useMentorAvailability, useMentorBookedSlots } from "@/hooks/use-sessions";
+
+function getWindowsForDate(availabilityData, date) {
+  if (!availabilityData || !date) return [];
+  const dayOfWeek = date.getDay();
+  const dayEntry = availabilityData.find((entry) => entry.dayOfWeek === dayOfWeek);
+  if (!dayEntry) return [];
+  return dayEntry.slots.map((s) => ({ startTime: s.start, endTime: s.end }));
+}
 
 export function BookSessionDialog({ mentor, children }) {
   const [open, setOpen] = useState(false);
+
+  const mentorId = mentor?._id ?? mentor;
   const bookMutation = useBookSession();
+
+  const { data: availabilityData, isLoading: availabilityLoading } = useMentorAvailability(mentorId);
 
   const {
     register,
@@ -32,18 +37,33 @@ export function BookSessionDialog({ mentor, children }) {
     formState: { errors },
   } = useForm({
     resolver: zodResolver(bookSessionSchema),
-    defaultValues: { mentor: mentor?._id ?? mentor, date: undefined, startTime: '', description: '' },
+    defaultValues: {
+      mentor: mentorId,
+      date: undefined,
+      startTime: "",
+      description: "",
+    },
   });
 
-  const date = watch('date');
-  const startTime = watch('startTime');
+  const date = watch("date");
+  const startTime = watch("startTime");
+
+  const { data: bookedRanges = [], isLoading: bookedLoading } = useMentorBookedSlots(mentorId, date ?? null);
+
+  const availabilityWindows = getWindowsForDate(availabilityData, date);
+
+  function handleDateChange(d) {
+    setValue("date", d, { shouldValidate: true });
+    setValue("startTime", "", { shouldValidate: false });
+  }
 
   function onSubmit(values) {
-    const [h, m] = values.startTime.split(':').map(Number);
+    const [h, m] = values.startTime.split(":").map(Number);
     const start = new Date(values.date);
     start.setHours(h, m, 0, 0);
+
     const endTimeStr = addMinutes(values.startTime, 45);
-    const [eh, em] = endTimeStr.split(':').map(Number);
+    const [eh, em] = endTimeStr.split(":").map(Number);
     const end = new Date(values.date);
     end.setHours(eh, em, 0, 0);
 
@@ -56,10 +76,11 @@ export function BookSessionDialog({ mentor, children }) {
       },
       {
         onSuccess: () => {
+          toast.success("Session booked successfully!");
           setOpen(false);
           reset();
         },
-      }
+      },
     );
   }
 
@@ -69,40 +90,56 @@ export function BookSessionDialog({ mentor, children }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
+
+      <DialogContent className="sm:max-w-md max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>Book a review session</DialogTitle>
-          <DialogDescription>Choose a date, a 45-minute slot, and describe what you need help with.</DialogDescription>
+          <DialogDescription>Choose a date, pick an available 45-min slot, and add a description.</DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-1 flex-col gap-4 overflow-y-auto px-0.5 pb-1">
+          <input type="hidden" {...register("mentor")} />
+
+          {/* ── Date ──────────────────────────────────────────────────── */}
           <Field>
             <FieldLabel>Date</FieldLabel>
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={(d) => setValue('date', d, { shouldValidate: true })}
-              disabled={{ before: today }}
-              className="rounded-md border mx-auto"
-            />
+            <Calendar mode="single" selected={date} onSelect={handleDateChange} disabled={{ before: today }} className="rounded-md border mx-auto" />
             {errors.date && <FieldError>{errors.date.message}</FieldError>}
           </Field>
 
+          {/* ── Time slot ─────────────────────────────────────────────── */}
           <Field>
-            <FieldLabel>Time slot (45 min)</FieldLabel>
-            <TimeSlotPicker value={startTime} onChange={(slot) => setValue('startTime', slot, { shouldValidate: true })} />
+            <FieldLabel>
+              Time slot (45 min)
+              {date && <span className="ml-1.5 text-xs font-normal text-muted-foreground">— {date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}</span>}
+            </FieldLabel>
+
+            {!date ? (
+              <p className="py-2 text-center text-sm text-muted-foreground">Select a date first.</p>
+            ) : (
+              <TimeSlotPicker
+                value={startTime}
+                onChange={(slot) => setValue("startTime", slot, { shouldValidate: true })}
+                availabilityWindows={availabilityWindows}
+                bookedRanges={bookedRanges}
+                selectedDate={date}
+                loading={availabilityLoading || bookedLoading}
+              />
+            )}
             {errors.startTime && <FieldError>{errors.startTime.message}</FieldError>}
           </Field>
 
+          {/* ── Description ───────────────────────────────────────────── */}
           <Field>
             <FieldLabel>What do you need help with?</FieldLabel>
-            <Textarea rows={3} placeholder="e.g. Reviewing my React project structure..." {...register('description')} />
+            <Textarea rows={2} placeholder="e.g. Reviewing my React project structure..." {...register("description")} />
             {errors.description && <FieldError>{errors.description.message}</FieldError>}
           </Field>
 
-          <DialogFooter>
+          {/* ── Submit ────────────────────────────────────────────────── */}
+          <DialogFooter className="flex-shrink-0 pt-2">
             <Button type="submit" disabled={bookMutation.isPending} className="w-full">
-              {bookMutation.isPending ? <Spinner className="mr-2 size-4" /> : null}
+              {bookMutation.isPending && <Spinner className="mr-2 size-4" />}
               Confirm booking
             </Button>
           </DialogFooter>
