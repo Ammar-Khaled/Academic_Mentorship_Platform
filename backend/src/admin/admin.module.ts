@@ -16,6 +16,10 @@ import {
   ReviewSession,
   ReviewSessionSchema,
 } from '../sessions/schemas/review-session.schema';
+import {
+  MentorProfile,
+  MentorProfileSchema,
+} from '../mentors/schemas/mentor-profile.schema';
 
 @Module({
   imports: [
@@ -24,6 +28,7 @@ import {
       { name: UserApproval.name, schema: UserApprovalSchema },
       { name: SessionAuditLog.name, schema: SessionAuditLogSchema },
       { name: ReviewSession.name, schema: ReviewSessionSchema },
+      { name: MentorProfile.name, schema: MentorProfileSchema },
     ]),
   ],
   controllers: [AdminController],
