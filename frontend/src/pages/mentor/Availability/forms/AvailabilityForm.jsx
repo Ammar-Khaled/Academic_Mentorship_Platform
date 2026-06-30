@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { availabilitySchema } from "../schemas/availability.schema";
 import { DAY_OPTIONS } from "../constants";
@@ -21,6 +21,7 @@ export function AvailabilityForm({ defaultValues, submitLabel, isSubmitting, onS
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors },
   } = form;
 
@@ -34,13 +35,24 @@ export function AvailabilityForm({ defaultValues, submitLabel, isSubmitting, onS
         <label className="text-sm font-medium" htmlFor="dayOfWeek">
           Day
         </label>
-        <select id="dayOfWeek" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm" {...register("dayOfWeek", { valueAsNumber: true })}>
-          {DAY_OPTIONS.map((day) => (
-            <option key={day.value} value={day.value}>
-              {day.label}
-            </option>
-          ))}
-        </select>
+        <Controller
+          name="dayOfWeek"
+          control={control}
+          render={({ field }) => (
+            <select
+              id="dayOfWeek"
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              value={field.value}
+              onChange={(e) => field.onChange(Number(e.target.value))}
+            >
+              {DAY_OPTIONS.map((day) => (
+                <option key={day.value} value={day.value}>
+                  {day.label}
+                </option>
+              ))}
+            </select>
+          )}
+        />
         {errors.dayOfWeek?.message ? <p className="text-xs text-destructive">{errors.dayOfWeek.message}</p> : null}
       </div>
 
@@ -49,7 +61,19 @@ export function AvailabilityForm({ defaultValues, submitLabel, isSubmitting, onS
           <label className="text-sm font-medium" htmlFor="startTime">
             Start Time
           </label>
-          <input id="startTime" type="time" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm" {...register("startTime")} />
+          <Controller
+            name="startTime"
+            control={control}
+            render={({ field }) => (
+              <input
+                id="startTime"
+                type="time"
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
           {errors.startTime?.message ? <p className="text-xs text-destructive">{errors.startTime.message}</p> : null}
         </div>
 
@@ -57,7 +81,19 @@ export function AvailabilityForm({ defaultValues, submitLabel, isSubmitting, onS
           <label className="text-sm font-medium" htmlFor="endTime">
             End Time
           </label>
-          <input id="endTime" type="time" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm" {...register("endTime")} />
+          <Controller
+            name="endTime"
+            control={control}
+            render={({ field }) => (
+              <input
+                id="endTime"
+                type="time"
+                className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
           {errors.endTime?.message ? <p className="text-xs text-destructive">{errors.endTime.message}</p> : null}
         </div>
       </div>
@@ -66,10 +102,21 @@ export function AvailabilityForm({ defaultValues, submitLabel, isSubmitting, onS
         <label className="text-sm font-medium" htmlFor="isActive">
           Status
         </label>
-        <select id="isActive" className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm" {...register("isActive", { valueAsBoolean: true })}>
-          <option value={true}>Active</option>
-          <option value={false}>Inactive</option>
-        </select>
+        <Controller
+          name="isActive"
+          control={control}
+          render={({ field }) => (
+            <select
+              id="isActive"
+              className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm"
+              value={field.value ? "true" : "false"}
+              onChange={(e) => field.onChange(e.target.value === "true")}
+            >
+              <option value="true">Active</option>
+              <option value="false">Inactive</option>
+            </select>
+          )}
+        />
         {errors.isActive?.message ? <p className="text-xs text-destructive">{errors.isActive.message}</p> : null}
       </div>
 

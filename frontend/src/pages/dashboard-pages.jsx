@@ -22,6 +22,10 @@ import { PageHeader } from '@/components/layout/page-header';
 import { BookSessionDialog } from '@/components/sessions/book-session-dialog';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/stores/auth-store';
+import { useMentors } from '@/pages/mentor/Discovery/hooks/useMentors';
+import { useUpcomingSessions, useSessionHistory } from '@/hooks/use-sessions';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '@/lib/api';
 
 const dashboardConfig = {
   student: {
@@ -74,9 +78,10 @@ const dashboardConfig = {
   },
 };
 
-function DashboardPage({ role }) {
+function DashboardPage({ role, dynamicStats }) {
   const { user } = useAuthStore();
   const config = dashboardConfig[role];
+  const statsToRender = dynamicStats || config.stats;
 
   return (
     <div className="flex flex-col gap-8">
@@ -103,14 +108,14 @@ function DashboardPage({ role }) {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-3">
-        {config.stats.map((stat) => (
+        {statsToRender.map((stat) => (
           <Card key={stat.label} className="bg-card/80">
             <CardHeader className="gap-2">
               <CardDescription>{stat.label}</CardDescription>
               <CardTitle className="text-3xl font-semibold tracking-tight">{stat.value}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">Live data arrives in Phase 2</p>
+              <p className="text-xs text-muted-foreground">{dynamicStats ? 'Up to date metrics' : 'Live data arrives in Phase 2'}</p>
             </CardContent>
           </Card>
         ))}
@@ -142,17 +147,19 @@ function DashboardPage({ role }) {
   );
 }
 
-const MOCK_MENTORS = [
-  { _id: '666ea208c90b6a382c4be0f1', name: 'Sara Ahmed', title: 'Senior React Engineer', bio: 'Helps teams ship accessible UIs with React, TypeScript, and modern tooling.', averageRating: 4.8, hourlyRate: 45, stack: { name: 'React Engineering' } },
-  { _id: '666ea208c90b6a382c4be0f2', name: 'Omar Hassan', title: 'Python Backend Lead', bio: 'Reviews FastAPI and Django codebases with a focus on reliability and testing.', averageRating: 4.6, hourlyRate: 50, stack: { name: 'Python Systems' } },
-  { _id: '666ea208c90b6a382c4be0f3', name: 'Lina Farouk', title: 'Staff System Designer', bio: 'Guides engineers through distributed systems, caching, and interview loops.', averageRating: 4.9, hourlyRate: 65, stack: { name: 'System Design' } },
-  { _id: '666ea208c90b6a382c4be0f4', name: 'Karim Nabil', title: 'Node.js Platform Engineer', bio: 'Specializes in NestJS, MongoDB schema design, and production API hardening.', averageRating: 4.5, hourlyRate: 48, stack: { name: 'Node.js Backend' } },
-  { _id: '666ea208c90b6a382c4be0f5', name: 'Yasmin Ali', title: 'Frontend Mentor', bio: 'Pairs on React refactors, state management, and portfolio-ready project reviews.', averageRating: 4.7, hourlyRate: 40, stack: { name: 'React Engineering' } }
-];
-
 export function StudentDashboardPage() {
   const { user } = useAuthStore();
   const config = dashboardConfig.student;
+  const { mentors, loading } = useMentors({ limit: 20 });
+
+  const { data: upcoming = [] } = useUpcomingSessions();
+  const { data: history = [] } = useSessionHistory();
+
+  const dynamicStats = [
+    { label: 'Upcoming sessions', value: upcoming.length },
+    { label: 'Completed reviews', value: history.filter(s => s.status === 'Completed').length },
+    { label: 'Available mentors', value: mentors.length },
+  ];
 
   return (
     <div className="flex flex-col gap-8">
@@ -179,14 +186,14 @@ export function StudentDashboardPage() {
       </section>
 
       <section className="grid gap-4 sm:grid-cols-3">
-        {config.stats.map((stat) => (
+        {dynamicStats.map((stat) => (
           <Card key={stat.label} className="bg-card/80">
             <CardHeader className="gap-2">
               <CardDescription>{stat.label}</CardDescription>
               <CardTitle className="text-3xl font-semibold tracking-tight">{stat.value}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-xs text-muted-foreground">Live data arrives in Phase 2</p>
+              <p className="text-xs text-muted-foreground">Up to date metrics</p>
             </CardContent>
           </Card>
         ))}
@@ -233,6 +240,14 @@ export function StudentDashboardPage() {
               );
             }
 
+            if (action.title === 'Profile') {
+              return (
+                <Link key={action.title} to="/dashboard/profile">
+                  {cardContent}
+                </Link>
+              );
+            }
+
             return <div key={action.title}>{cardContent}</div>;
           })}
         </div>
@@ -246,45 +261,59 @@ export function StudentDashboardPage() {
           </p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {MOCK_MENTORS.map((mentor) => (
-            <Card key={mentor._id} className="flex flex-col justify-between border transition-all hover:shadow-md">
-              <CardHeader className="gap-2">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1">
-                    <CardTitle className="text-lg font-semibold">{mentor.name}</CardTitle>
-                    <CardDescription className="text-xs font-medium text-primary uppercase tracking-wider">
-                      {mentor.title}
-                    </CardDescription>
+        {loading ? (
+          <div className="flex justify-center py-12 text-muted-foreground text-sm">
+            Loading available mentors...
+          </div>
+        ) : mentors.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center text-muted-foreground text-sm">
+              No mentors available at the moment.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {mentors.map((mentor) => (
+              <Card key={mentor._id} className="flex flex-col justify-between border transition-all hover:shadow-md">
+                <CardHeader className="gap-2">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="space-y-1">
+                      <CardTitle className="text-lg font-semibold">{mentor.name}</CardTitle>
+                      <CardDescription className="text-xs font-medium text-primary uppercase tracking-wider">
+                        {mentor.title}
+                      </CardDescription>
+                    </div>
+                    <div className="flex items-center gap-1 text-xs font-semibold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">
+                      <span>★</span>
+                      <span>{mentor.averageRating}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 text-xs font-semibold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full">
-                    <span>★</span>
-                    <span>{mentor.averageRating}</span>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-0">
+                  <p className="text-sm text-muted-foreground min-h-[60px] line-clamp-3">
+                    {mentor.bio}
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {mentor.stack && (
+                      <Badge variant="secondary" className="text-[10px]">
+                        {mentor.stack.name}
+                      </Badge>
+                    )}
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4 pt-0">
-                <p className="text-sm text-muted-foreground min-h-[60px] line-clamp-3">
-                  {mentor.bio}
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  <Badge variant="secondary" className="text-[10px]">
-                    {mentor.stack.name}
-                  </Badge>
-                </div>
-                <div className="flex items-center justify-between border-t pt-4">
-                  <div>
-                    <span className="text-xs text-muted-foreground">Rate:</span>
-                    <p className="text-sm font-semibold">${mentor.hourlyRate}/hr</p>
+                  <div className="flex items-center justify-between border-t pt-4">
+                    <div>
+                      <span className="text-xs text-muted-foreground">Rate:</span>
+                      <p className="text-sm font-semibold">${mentor.hourlyRate}/hr</p>
+                    </div>
+                    <BookSessionDialog mentor={mentor}>
+                      <Button size="sm">Book Session</Button>
+                    </BookSessionDialog>
                   </div>
-                  <BookSessionDialog mentor={mentor}>
-                    <Button size="sm">Book Session</Button>
-                  </BookSessionDialog>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
@@ -295,5 +324,26 @@ export function MentorDashboardPage() {
 }
 
 export function AdminDashboardPage() {
-  return <DashboardPage role="admin" />;
+  const { data: users } = useQuery({ 
+    queryKey: ['admin-users'], 
+    queryFn: () => api.get('/admin/users').then(r => r.data) 
+  });
+  
+  const { data: pendingMentors } = useQuery({ 
+    queryKey: ['admin-pending'], 
+    queryFn: () => api.get('/admin/users/pending').then(r => r.data) 
+  });
+  
+  const { data: stacks } = useQuery({ 
+    queryKey: ['stacks'], 
+    queryFn: () => api.get('/stacks').then(r => r.data) 
+  });
+
+  const dynamicStats = [
+    { label: 'Total users', value: users?.length ?? '—' },
+    { label: 'Pending mentors', value: pendingMentors?.length ?? '—' },
+    { label: 'Active stacks', value: stacks?.length ?? '—' },
+  ];
+
+  return <DashboardPage role="admin" dynamicStats={dynamicStats} />;
 }
